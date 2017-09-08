@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    ports:
+      - 5672:5672 # Node port
+      - 15672:15672 # Management port
+    healthcheck:
+      test: ["CMD", "wget", "http://rabbitmq:15672/"]
+      interval: 20s
+      timeout: 6s
+      retries: 10
+    networks:
+      - net
+
+  xyz-publisher:
+    image: xyz-publisher:latest
+    build:
+      context: ./src/Publisher
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    networks:
+      - net
+      
+  xyz-subscriber:
+    image: xyz-subscriber:latest
+    build:
+      context: ./src/Subscriber
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    networks:
+      - net
+
+networks:
+  net:
+    driver: overlay
