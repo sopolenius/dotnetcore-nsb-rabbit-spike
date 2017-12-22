@@ -14,14 +14,17 @@ namespace Shared
         Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
     }
 
-    public static EndpointConfiguration ConfigureEndpoint()
+    public static EndpointConfiguration ConfigureEndpoint(string name, Action<RoutingSettings> applyRouting = null)
     {
-      var epConfig = new EndpointConfiguration("Spike");
+      var epConfig = new EndpointConfiguration(name);
       epConfig.UsePersistence<LearningPersistence>();
       epConfig.DisableFeature<TimeoutManager>();
-      epConfig.UseTransport<RabbitMQTransport>()
+      var transport = epConfig.UseTransport<RabbitMQTransport>()
                   .ConnectionString("host=rabbitmq;user=guest;password=guest")
                   .UseConventionalRoutingTopology();
+      var routing = transport.Routing();
+      
+      applyRouting?.Invoke(routing);
 
       epConfig.SendFailedMessagesTo("error");
       epConfig.EnableInstallers();

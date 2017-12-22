@@ -1,5 +1,5 @@
 # SUBSCRIBER
-FROM microsoft/aspnetcore:latest
+FROM microsoft/dotnet:2.0-runtime
 WORKDIR /app
 COPY /start.sh .
 COPY /wait-for-it.sh .

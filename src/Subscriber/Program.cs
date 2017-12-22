@@ -19,7 +19,7 @@
 
         static async Task AsyncMain()
         {
-            var epConfig = Config.ConfigureEndpoint();
+            var epConfig = Config.ConfigureEndpoint("server");
             var ep = await Endpoint.Start(epConfig).ConfigureAwait(false);
         
             var mre = new ManualResetEventSlim(false);

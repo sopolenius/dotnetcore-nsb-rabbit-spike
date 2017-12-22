@@ -45,16 +45,20 @@
         public static async Task Main(string[] args)
         {
             Config.SetupCultures();
-            var epConfig = Config.ConfigureEndpoint();
-            epConfig.SendOnly();
-            epConfig.RegisterComponents(r =>
+            var endpointConfig = Config.ConfigureEndpoint("client",x => {
+                x.RouteToEndpoint(typeof(TheCommand),
+                "server");
+            });
+            endpointConfig.SendOnly();
+            
+            endpointConfig.RegisterComponents(r =>
             {
                 r.ConfigureComponent<MutateOutgoingMessages>(DependencyLifecycle.InstancePerCall);
             });
             var stop = new ManualResetEventSlim(false);
             var end = new ManualResetEventSlim(false);
             //epConfig.RegisterMessageMutator(new MutateOutgoingMessages());
-            var ep = await Endpoint.Start(epConfig).ConfigureAwait(false);
+            var ep = await Endpoint.Start(endpointConfig).ConfigureAwait(false);
             await Loop(ep).ConfigureAwait(false);
 
             Console.CancelKeyPress += (x,e) =>{
@@ -74,19 +78,32 @@
             end.Set();
         }
 
+        
+        static (int a, int b ) Test(){
+            return (10, 20);
+            Console.WriteLine("Console.WR")
+        }
+
 
         static async Task Loop(IEndpointInstance endpoint)
         {
+
+            (int x, int y) = Test();
             int i = 0;
             while (true)
             {
                 Thread.CurrentPrincipal = new GenericPrincipal(new GenericIdentity("Pingu"), null);
-                var publishOptions = new SendOptions();
+                var publishOptions = new PublishOptions();
+                var sendOptions = new SendOptions();
                 publishOptions.SetHeader("Test", "Test");
 
-                await endpoint.Send(new Shared.TheCommand { StringProperty = "Hello", IntProperty = i++ }, publishOptions);
+                await Task.Delay(1000);
+
+                await endpoint.Send(new Shared.TheCommand { StringProperty = "Hello", IntProperty = i++ }, sendOptions);
 
                 await Task.Delay(1000);
+
+                await endpoint.Publish(new Shared.TheMessage { StringProperty = "Hello", IntProperty = i++ }, publishOptions);
 
             }
         }
